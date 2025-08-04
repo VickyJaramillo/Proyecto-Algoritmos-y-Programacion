@@ -1,0 +1,20 @@
+
+Museo metropolitano de Arte
+Sistema de catálogo de la colección de arte
+
+Funcionalidades:
+1. Busqueda de obras 
+   a. por departamento
+   b. por nacionalidad del autor
+   c. por nombre del autor
+
+Listado simple con pocos detalles
+Por obra: Id de la obra, titulo, nombre del autor 
+
+2. Mostrar detalles de la obra
+
+titulo,nombre del artista, nacionalidad del artista,fecha de nacimiento,fecha de muerte, tipo, año de creación, imagen de la obra
+
+Opción de ver imagen 
+
+
