@@ -11,10 +11,10 @@ class Obra:
         self.imagen_de_la_obra = imagen_de_la_obra
         
     def mostrar_para_listado(self):
-        print(f'Obra #{self.numero}: "{self.titulo}". Nombre del autor: {self.nombre_del_autor}')
+        return f'Obra #{self.numero}: "{self.titulo}". Nombre del autor: {self.nombre_del_autor}'
         
     def mostrar_detalles_completos(self):
-        print(f"""
+        return f"""
               Obra #{self.numero}: 
               Titulo {self.titulo} 
               Nombre del autor: {self.nombre_del_autor} 
@@ -24,6 +24,6 @@ class Obra:
               Tipo: {self.tipo} 
               Año de creación: {self.año_de_creación} 
               Imagen de la obra: {self.imagen_de_la_obra}
-              """)
+              """
         
         

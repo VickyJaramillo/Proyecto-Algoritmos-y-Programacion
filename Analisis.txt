@@ -18,3 +18,9 @@ titulo,nombre del artista, nacionalidad del artista,fecha de nacimiento,fecha de
 Opción de ver imagen 
 
 
+Cargar nacionalidades utilizando CSV
+
+Para cargar las obras la recomendación fue que cargaramos las obras por departamento, no todas al inicio
+
+Es decir se cargaran las obras cuando el usuario seleccione un departamento
+
