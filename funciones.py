@@ -6,3 +6,11 @@ def imprimir_menu(opcion1, opcion2, opcion3):
     print(f"4. Salir")
     seleccion = input("Seleccione una opción (1-4): ")
     return seleccion
+
+def es_numero(numero):
+        try:
+                int(numero)
+                return True
+        except ValueError:
+              return False
+          
