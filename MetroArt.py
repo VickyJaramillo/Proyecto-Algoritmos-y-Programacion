@@ -37,11 +37,13 @@ class MetroArt:
             print('.',end="")
             try:
                 respuesta = requests.get(url)
+                respuesta.raise_for_status()
                 if respuesta.status_code == 200:
                     datos = respuesta.json()
                     break
-            except:
-                time.sleep(1)
+            except requests.exceptions.RequestException as e:
+                print(e)
+                time.sleep(1.5)
                 continue
         return datos
         
@@ -95,7 +97,6 @@ class MetroArt:
         if url == '':
             print("La obra no tiene imagen.")
         else:
-            
             eleccion_mostrar_imagen = input('''
                 ¿Desea ver la imagen de la obra en una nueva ventana? Ingrese "y" si lo desea o "n" en caso contrario:''')
             if eleccion_mostrar_imagen.lower() == "y":
@@ -406,8 +407,6 @@ class MetroArt:
                 print(" ")                
                 print("Opción no válida. Intente de nuevo.")
                 print(" ")
-            
-        
             
 # Funciones a implementar:
 # 1. Busqueda de obras 
