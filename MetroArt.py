@@ -24,14 +24,14 @@ class MetroArt:
         self.nacionalidades = []
         self.obras_por_departamento = {}
         self.obras_por_nacionalidad = {}
-        self.obras_por_autor = {}
 
     def leer_api(self,url):
         """ Metodo para leer la API del museo metropolitano de arte.
         Atributos:
             self (MetroArt): Instancia de la clase MetroArt.
             url (str): URL a leer.
-        Retorna
+        Retorna:
+            Los datos obtenidos de la respuesta de la lectura para luego manipularlos y utilizarlos
         """
         while True:
             print('.',end="")
@@ -52,6 +52,9 @@ class MetroArt:
         """ Metodo para cargar los datos de la API del museo metropolitano de arte.
         Atributos:
             self (MetroArt): Instancia de la clase MetroArt.
+        
+            Carga los datos iniciales desde la API, en este caso los departamentos, la función
+            se ejecuta pero no tiene un valor de retorno
         """        
         
         print(f'\n---------- Cargando desde la API ----------\n')        
@@ -70,6 +73,9 @@ class MetroArt:
         Atributos:
             self (MetroArt): Instancia de la clase MetroArt.
             archivo (str): Ruta del archivo CSV a cargar.
+            
+            Carga los datos iniciales desde el CSV, en este caso las nacionalidades, la función
+            se ejecuta pero no tiene un valor de retorno
         """
         print(f'\n---------- Cargando desde CSV ----------\n')
         with open(archivo, mode='r') as archivo_csv:
@@ -93,6 +99,8 @@ class MetroArt:
         Atributos:
             self (MetroArt): Instancia de la clase MetroArt.
             url (str): URL de la imagen a mostrar.
+            
+            Si consigue un link se ejecuta, almacena la foto y la muestra
         """
         if url == '':
             print("La obra no tiene imagen.")
@@ -108,6 +116,17 @@ class MetroArt:
                 img.show()
     
     def submenu_obras_por_departamento(self,nombre_del_departamento,ids_de_obras=[]):
+        """ Metodo para mostrar las obras de un departamento.
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+            nombre_del_departamento (str): Nombre del departamento.
+            ids_de_obras (list): IDs de las obras a mostrar.
+            
+            Si se le pasa una lista con las obras esta recorrerá la lista e imprimirá el menu
+            con las obras dando la opcion de ver mas detalles de esta.
+            Si no se le pasa ninguna lista, buscará la lista de ids en las obras almacenadas usando el nombre del
+            departamento y mostrará luego el mismo menu dado que se llama recursivamente
+        """
         if ids_de_obras == []:
             ids_de_obras = self.obras_por_departamento[nombre_del_departamento]
             self.submenu_obras_por_departamento(nombre_del_departamento, ids_de_obras)
@@ -156,7 +175,13 @@ class MetroArt:
             
     def busqueda_por_departamento(self):
         """ Metodo para la funcionalidad de busqueda por departamento.
-            Imprime la lista de departamentos para que el usuario seleccione uno eligiendo un numero 
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+        
+            Imprime la lista de departamentos para que el usuario seleccione uno eligiendo un numero
+            y lleva al submenu para saber mas detalles de estas.
+            Si el numero de departamento es valido busca si tiene la información guardada, 
+            si no consulta a la API y guarda y muestra la obra
         """        
 
         while True:
@@ -242,10 +267,76 @@ class MetroArt:
             
             self.submenu_obras_por_departamento(nombre_del_departamento, ids_de_obras)
     
+    def submenu_obras_por_nacionalidad(self,nombre_de_la_nacionalidad,ids_de_obras=[]):
+        """ Metodo para mostrar las obras de un nacionalidad.
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+            nombre_de_la_nacionalidad (str): Nombre del nacionalidad.
+            ids_de_obras (list): IDs de las obras a mostrar.
+            
+            Si se le pasa una lista con las obras esta recorrerá la lista e imprimirá el menu
+            con las obras dando la opcion de ver mas detalles de esta.
+            Si no se le pasa ninguna lista, buscará la lista de ids en las obras almacenadas usando el nombre del
+            nacionalidad y mostrará luego el mismo menu dado que se llama recursivamente
+        """
+        if ids_de_obras == []:
+            ids_de_obras = self.obras_por_nacionalidad[nombre_de_la_nacionalidad]
+            self.submenu_obras_por_nacionalidad(nombre_de_la_nacionalidad, ids_de_obras)
+            
+        while True:
+                print(" ")
+                print(f"---------- Nacionalidad {nombre_de_la_nacionalidad} ----------")
+                print(" ")
+                for obra in self.obras:
+                    if obra.numero in ids_de_obras:
+                        print(obra.mostrar_para_listado())
+                print(" ")
+                numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
+                while not es_numero(numero_de_la_obra_a_mostrar):
+                    print(" ")
+                    print("Intente de nuevo.")
+                    print(" ")
+                    numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
+                
+                # Si decide salir 
+                if numero_de_la_obra_a_mostrar == '0': 
+                    break
+                
+                #Verifico que el id pertenece a una obra. Si no sale busco su elección
+                obra_encontrada = False
+                obra_a_mostrar = " "
+                for obra in self.obras:
+                    if obra.numero == int(numero_de_la_obra_a_mostrar):
+                        obra_encontrada = True
+                        obra_a_mostrar = obra
+                        break
+                    
+                # Si no seleccionó un nacionalidad valido de la lista
+                if obra_encontrada == False:
+                    print('')
+                    print("Número de obra no existente.")
+                    continue
+                
+                print(obra_a_mostrar.mostrar_detalles_completos())
+                
+                # Para mostrar la imagen
+                api_url = obra.imagen_de_la_obra
+                titulo = obra.titulo.replace(" ", "_")  # Reemplazo espacios por guiones bajos para el nombre del archivo
+                    
+                self.mostrar_imagen(api_url,titulo)
                             
     def busqueda_por_nacionalidad_del_autor(self):
+        """ Metodo para la funcionalidad de busqueda por nacionalidad.
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+        
+            Imprime la lista de nacionalidades para que el usuario seleccione una eligiendo un numero
+            # TODO: COMPLETAR
+            Si el numero de nacionalidad es valido busca si tiene la información guardada, 
+            si no consulta a la API y guarda y muestra la obra
+        """        
         while True:
-            # Imprimo los departamentos y guardo la elección del usuario
+            # Imprimo los nacionalidads y guardo la elección del usuario
             print("---------- Busqueda por nacionalidad ----------")
             print('')
             for i in range(len(self.nacionalidades)):
@@ -277,9 +368,9 @@ class MetroArt:
                     print(self.obras_por_departamento[nombre_de_la_nacionalidad])
 
                     # lista es la que contiene las obras
-                    # lista_obras = self.obras_por_departamento[nombre_del_departamento]
+                    ids_de_obras = self.obras_por_nacionalidad[nombre_de_la_nacionalidad]
 
-                    # Extraer a funcion / Utilizar funcion
+                    self.submenu_obras_por_nacionalidad(nombre_de_la_nacionalidad, ids_de_obras)
                     
                     continue #Si la consiguió no hace buscar en la API, vuelve al bucle
                 
@@ -288,7 +379,7 @@ class MetroArt:
             print("Recuperando obras desde la API. Espere por favor...") 
             
             # Busco las obras por ese nacionalidad en la API
-            url = f"https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q=Afghan"
+            url = f"https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={nombre_de_la_nacionalidad}"
             
             datos = self.leer_api(url)
             
@@ -300,7 +391,8 @@ class MetroArt:
             for numero_de_obra in ids_de_obras: 
                 url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{numero_de_obra}"
                 obra_respuesta = self.leer_api(url)
-                    
+                # TODO: Verificar que funcione
+                #if obra_respuesta['artistNationality'] == nombre_de_la_nacionalidad:    
                 nueva_obra = Obra(
                     obra_respuesta['objectID'],
                     obra_respuesta['title'],
@@ -314,10 +406,20 @@ class MetroArt:
                     )
                 self.obras.append(nueva_obra)
             
-            # Extraer a funcion
-            while True:
+            self.submenu_obras_por_nacionalidad(nombre_de_la_nacionalidad, ids_de_obras)
+    
+    def submenu_obras_por_nombre(self,nombre_autor,ids_de_obras=[]):
+        """ Metodo para mostrar las obras de un nombre.
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+            nombre_autor (str): Nombre del autor a buscar.
+            ids_de_obras (list): IDs de las obras a mostrar.
+            
+            TODO: COMPLETAR
+        """    
+        while True:
                 print(" ")
-                print(f"---------- Nacionalidad {nombre_de_la_nacionalidad} ----------")
+                print(f"---------- Nombre del autor: {nombre_autor} ----------")
                 print(" ")
                 for obra in self.obras:
                     if obra.numero in ids_de_obras:
@@ -331,7 +433,7 @@ class MetroArt:
                     numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
                 
                 # Si decide salir 
-                if int(numero_de_la_obra_a_mostrar) == '0': 
+                if numero_de_la_obra_a_mostrar == '0': 
                     break
                 
                 #Verifico que el id pertenece a una obra. Si no sale busco su elección
@@ -343,7 +445,7 @@ class MetroArt:
                         obra_a_mostrar = obra
                         break
                     
-                # Si no seleccionó un departamento valido de la lista
+                # Si no seleccionó un nombre valido de la lista
                 if obra_encontrada == False:
                     print('')
                     print("Número de obra no existente.")
@@ -351,27 +453,70 @@ class MetroArt:
                 
                 print(obra_a_mostrar.mostrar_detalles_completos())
                 
-                # TODO: validar
-                eleccion_mostrar_imagen = input('''
-                ¿Desea ver la imagen de la obra en una nueva ventana? Ingrese "y" si lo desea o "n" en caso contrario:''')
-                if eleccion_mostrar_imagen.lower() == "y":
-                    # Funcion de mostrar imagen
-                    # TODO: MOSTRAR IMAGEN
+                # Para mostrar la imagen
+                api_url = obra.imagen_de_la_obra
+                titulo = obra.titulo.replace(" ", "_")  # Reemplazo espacios por guiones bajos para el nombre del archivo
                     
-                    # URL de la API 
-                    api_url = obra.imagen_de_la_obra
-                    # Nombre deseado para el archivo (sin extensión, ya que se determinará automáticamente) 
-                    nombre_archivo_destino = "imagenes/logo_aleatorio" 
-                    # Llamar a la función para guardar la imagen 
-                    nombre_archivo_destino=guardar_imagen_desde_url(api_url, nombre_archivo_destino) 
-                    img = Image.open(nombre_archivo_destino) 
-                    img.show()
-                    
-                    print('imagen')
-        
+                self.mostrar_imagen(api_url,titulo)    
             
     def busqueda_por_nombre_del_autor(self):
-        pass
+        """ Metodo para la funcionalidad de busqueda por nombre del autor.
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+        
+            Permite ingresar un nombre del autor para que el programa busque a las obras correspondientes
+            por coincidencia parcial con el nombre.
+            
+            Si no hay ninguna coincidencia indica al usuario
+        """        
+        while True:
+            # Imprimo los  y guardo la elección del usuario
+            print("---------- Busqueda por autor ----------")
+            
+            nombre_autor = input("Ingrese el nombre y apellido del autor que desea consultar con un solo espacio (el separador) o el numero 0 para salir: ")
+            while not es_nombre(nombre_autor) and nombre_autor !=0:
+                print(" ")
+                print("Intente de nuevo.")
+                print(" ")
+                nombre_autor = input("Ingrese el nombre y apellido del autor que desea consultar con un solo espacio (el separador) o el numero 0 para salir: ")
+                
+            # Si decide salir 
+            if nombre_autor == "0": 
+                break
+            
+            print(f"Buscando obras por {nombre_autor} ")
+            print(' ')
+            
+            # Busco las obras por ese nombre de autor en la API
+            url = f"https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={nombre_autor}"
+            
+            datos = self.leer_api(url)
+            ids_de_obras = datos['objectIDs']        
+            
+            print(" ")
+            print("Recuperando obras desde la API. Espere por favor...") 
+            #   TODO: Validar en cada for si no consigue alguna obra 
+            for numero_de_obra in ids_de_obras: 
+                # Validar "Not a valid Object"
+                url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{numero_de_obra}"
+                obra_respuesta = self.leer_api(url)
+                # TODO: Verificar que funcione
+                #if obra_respuesta['artistDisplayName'] == nombre_autor:    
+                nueva_obra = Obra(
+                    obra_respuesta['objectID'],
+                    obra_respuesta['title'],
+                    obra_respuesta['artistDisplayName'],
+                    obra_respuesta['artistNationality'],
+                    obra_respuesta['artistBeginDate'],
+                    obra_respuesta['artistEndDate'],
+                    obra_respuesta['classification'],
+                    obra_respuesta['objectDate'],
+                    obra_respuesta['primaryImage']
+                    )
+                self.obras.append(nueva_obra)
+            
+            self.submenu_obras_por_nombre(nombre_autor,ids_de_obras)
+        
     
     def menu(self):
         while True:
@@ -398,7 +543,7 @@ class MetroArt:
             # por nombre del autor
             elif elegida == '3':
                 print(" ")
-                pass
+                self.busqueda_por_nombre_del_autor()
             
             elif elegida == '4':
                 break

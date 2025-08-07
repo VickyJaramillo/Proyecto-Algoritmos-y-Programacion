@@ -13,4 +13,12 @@ def es_numero(numero):
                 return True
         except ValueError:
               return False
+      
+def es_nombre(nombre_autor):
+        if " " in nombre_autor and nombre_autor.count(" ")==1:
+                nombre_autor_provisional=nombre_autor
+                copia=nombre_autor_provisional.replace(" ","")
+                if copia.isalpha() and len(nombre_autor)>=3 and len(nombre_autor)<=30:
+                        return True
+        return False
           
