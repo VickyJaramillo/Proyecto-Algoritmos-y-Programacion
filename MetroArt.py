@@ -19,7 +19,7 @@ class MetroArt:
             self (MetroArt): Instancia de la clase MetroArt.
         """        
         self.nombre_del_museo = "Museo metropolitano de Arte"
-        self.obras = []
+        self.obras = [] 
         self.departamentos = []
         self.nacionalidades = []
         self.obras_por_departamento = {}
@@ -39,7 +39,7 @@ class MetroArt:
                 respuesta = requests.get(url)
                 respuesta.raise_for_status()
                 if respuesta.status_code == 200:
-                    datos = respuesta.json()
+                    datos = respuesta.json()                    
                     break
             except requests.exceptions.RequestException as e:
                 if e.response.status_code == 404:
@@ -174,8 +174,8 @@ class MetroArt:
                 print(obra_a_mostrar.mostrar_detalles_completos())
                 
                 # Para mostrar la imagen
-                api_url = obra.imagen_de_la_obra
-                titulo = obra.titulo.replace(" ", "_")  # Reemplazo espacios por guiones bajos para el nombre del archivo
+                api_url = obra_a_mostrar.imagen_de_la_obra
+                titulo = obra_a_mostrar.titulo.replace(" ", "_")  # Reemplazo espacios por guiones bajos para el nombre del archivo
                     
                 self.mostrar_imagen(api_url,titulo)
             
@@ -231,6 +231,10 @@ class MetroArt:
                 # Verifico si ya se buscó en algun momento
                 encontrado = self.obras_por_departamento.get(nombre_del_departamento,-1)
                 
+                # {
+                    # Artes modernas: [1,2,3]
+                # }
+                
                 # Si esta en el diccionario se procede a mostrar las obras USAR FUNCION
                 if encontrado != -1:
                     
@@ -283,7 +287,7 @@ class MetroArt:
                     nombre_del_autor = nombre_del_autor.replace("(","").replace(")","").replace(",","")
                 if nombre_del_autor == " " or nombre_del_autor == "":
                     nombre_del_autor = "No especificado"
-                if type(nombre_del_autor) == tuple:
+                if type(nombre_del_autor) == tuple:   # ("nombre ejemplo", ) Me salia esto en la API
                     nombre_del_autor = nombre_del_autor[0]
                 
                 nacionalidad_del_autor = obra_respuesta['artistNationality'],
@@ -747,6 +751,10 @@ class MetroArt:
         
     
     def menu(self):
+        """ Metodo para imprimir el menu principal del sistema
+        Atributos:
+            self (MetroArt): Instancia de la clase MetroArt.
+        """
         while True:
             print(" ")
             print("---------- Sistema de catálogo de la colección de arte ----------")

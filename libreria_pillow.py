@@ -2,8 +2,12 @@ import requests
 from PIL import Image
 
 def guardar_imagen_desde_url(url, nombre_archivo): 
-    """ 
-    Descarga una imagen desde una URL y la guarda en un archivo. 
+    """ Metodo para la funcionalidad de guardar la imagen.
+        Atributos: 
+            url (str): URL de la imagen.
+            nombre_archivo (str): Nombre del archivo a guardar.
+    
+        Descarga una imagen desde una URL y la guarda en un archivo en la carpeta imagenes. 
     """
     if url == '':
         print("La URL está vacía. No se puede descargar la imagen.")
