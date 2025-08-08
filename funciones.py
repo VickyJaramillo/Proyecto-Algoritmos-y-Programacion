@@ -20,5 +20,11 @@ def es_nombre(nombre_autor):
                 copia=nombre_autor_provisional.replace(" ","")
                 if copia.isalpha() and len(nombre_autor)>=3 and len(nombre_autor)<=30:
                         return True
-        return False
+                return False
+        else:
+                if len(nombre_autor)>=3 and len(nombre_autor)<=30:
+                        return True
+                return False
+                        
+        
           

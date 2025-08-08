@@ -42,10 +42,13 @@ class MetroArt:
                     datos = respuesta.json()
                     break
             except requests.exceptions.RequestException as e:
-                print(e)
+                if e.response.status_code == 404:
+                    datos = None
+                    break
+                #print(e)
                 time.sleep(1.5)
                 continue
-        return datos
+        return datos 
         
     
     def cargar_datos_API(self):
@@ -62,9 +65,12 @@ class MetroArt:
         url = "https://collectionapi.metmuseum.org/public/collection/v1/departments"
         datos = self.leer_api(url)
         
-        # La lista de departamentos sera una lista de diccionarios
-        for departamento in datos['departments']:
-            self.departamentos.append(departamento)
+        if datos is None:
+            print("La API no permitió leer los departamentos")
+        
+        else:
+            for departamento in datos['departments']:
+                self.departamentos.append(departamento)
         
         print(f'\n---------- Carga finalizada. ----------\n')
     
@@ -139,12 +145,12 @@ class MetroArt:
                     if obra.numero in ids_de_obras:
                         print(obra.mostrar_para_listado())
                 print(" ")
-                numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
+                numero_de_la_obra_a_mostrar = input("Ingrese el numero de una obra para mostrar sus detalles o el numero 0 para salir: ")
                 while not es_numero(numero_de_la_obra_a_mostrar):
                     print(" ")
                     print("Intente de nuevo.")
                     print(" ")
-                    numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
+                    numero_de_la_obra_a_mostrar = input("Ingrese el numero de una obra para mostrar sus detalles o el numero 0 para salir: ")
                 
                 # Si decide salir 
                 if numero_de_la_obra_a_mostrar == '0': 
@@ -237,7 +243,6 @@ class MetroArt:
                 
             print("No almacenadas, se procede a buscar en la API")
             print(" ")    
-            print("Recuperando obras desde la API. Espere por favor...") 
             # Busco las obras por ese departamento en la API
             url = f"https://collectionapi.metmuseum.org/public/collection/v1/search?departmentId={numero_del_departamento_seleccionado}&q=cat"
             
@@ -245,30 +250,101 @@ class MetroArt:
             
             ids_de_obras = datos['objectIDs']
             
-            self.obras_por_departamento[nombre_del_departamento] = ids_de_obras # Guardo los ids de obras del departamento
+            print("Recuperando obras desde la API. Espere por favor...") 
             print("")
+            if ids_de_obras == None:
+                print("No existen resultados para el nombre de autor ingresado")
+                print(" ")
+                continue
+            
+            self.obras_por_departamento[nombre_del_departamento] = ids_de_obras # Guardo los ids de obras del departamento
+            print(f"Filtrando de {len(ids_de_obras)} resultados.")
+            print('')
+            print("Revisando obras:")
             for numero_de_obra in ids_de_obras:
                 print(f"    Obra numero {numero_de_obra}") 
                 url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{numero_de_obra}"
                 obra_respuesta = self.leer_api(url)
+                
+                if obra_respuesta is None:
+                    print("Obra no válida en la API. No almacenada.")
+                    continue
+                
+                numero = obra_respuesta['objectID']
+                
+                titulo = obra_respuesta['title'],
+                if titulo == " " or titulo == "":
+                    titulo = "No especificado"
+                if type(titulo) == tuple:
+                    titulo = titulo[0]
+                
+                nombre_del_autor = obra_respuesta['artistDisplayName'],
+                if type(nombre_del_autor) == str:
+                    nombre_del_autor = nombre_del_autor.replace("(","").replace(")","").replace(",","")
+                if nombre_del_autor == " " or nombre_del_autor == "":
+                    nombre_del_autor = "No especificado"
+                if type(nombre_del_autor) == tuple:
+                    nombre_del_autor = nombre_del_autor[0]
+                
+                nacionalidad_del_autor = obra_respuesta['artistNationality'],
+                if nacionalidad_del_autor == " " or nacionalidad_del_autor == "":
+                    nacionalidad_del_autor = "No especificada"
+                if type(nacionalidad_del_autor) == tuple:
+                    nacionalidad_del_autor = nacionalidad_del_autor[0]
+                
+                fecha_de_nacimiento = obra_respuesta['artistBeginDate'],
+                if fecha_de_nacimiento == " " or fecha_de_nacimiento == "":
+                    fecha_de_nacimiento = "No especificada"
+                if type(fecha_de_nacimiento) == tuple:
+                    fecha_de_nacimiento = fecha_de_nacimiento[0]
+                
+                fecha_de_muerte = obra_respuesta['artistEndDate'],
+                if fecha_de_muerte == " " or fecha_de_muerte == "":
+                    fecha_de_muerte = "No especificada"
+                if type(fecha_de_muerte) == tuple:
+                    fecha_de_muerte = fecha_de_muerte[0]
+                
+                tipo = obra_respuesta['classification'],
+                if tipo == " " or tipo == "":
+                    tipo = "No especificado"
+                if type(tipo) == tuple:
+                    tipo = tipo[0]
+                
+                año_de_creación = obra_respuesta['objectDate'],
+                if año_de_creación == " " or año_de_creación == "":
+                    año_de_creación = "No especificado"
+                if type(año_de_creación) == tuple:
+                    año_de_creación = año_de_creación[0]
+                
+                imagen_de_la_obra = obra_respuesta['primaryImage']
+                if type(imagen_de_la_obra) == tuple:
+                    imagen_de_la_obra = imagen_de_la_obra[0]
                     
                 nueva_obra = Obra(
-                    obra_respuesta['objectID'],
-                    obra_respuesta['title'],
-                    obra_respuesta['artistDisplayName'],
-                    obra_respuesta['artistNationality'],
-                    obra_respuesta['artistBeginDate'],
-                    obra_respuesta['artistEndDate'],
-                    obra_respuesta['classification'],
-                    obra_respuesta['objectDate'],
-                    obra_respuesta['primaryImage']
+                    numero,
+                    titulo,
+                    nombre_del_autor,
+                    nacionalidad_del_autor,
+                    fecha_de_nacimiento,
+                    fecha_de_muerte,
+                    tipo,
+                    año_de_creación,
+                    imagen_de_la_obra,
                     )
-                self.obras.append(nueva_obra)
-            
+                
+                #Verifico que no este guardada
+                guardada = False
+                for obra in self.obras:
+                    if obra.numero == nueva_obra.numero:
+                        guardada = True
+                        
+                if not guardada:
+                    self.obras.append(nueva_obra)
+                    
             self.submenu_obras_por_departamento(nombre_del_departamento, ids_de_obras)
     
     def submenu_obras_por_nacionalidad(self,nombre_de_la_nacionalidad,ids_de_obras=[]):
-        """ Metodo para mostrar las obras de un nacionalidad.
+        """ Metodo para mostrar las obras filtrando por nacionalidad del autor.
         Atributos:
             self (MetroArt): Instancia de la clase MetroArt.
             nombre_de_la_nacionalidad (str): Nombre del nacionalidad.
@@ -331,7 +407,7 @@ class MetroArt:
             self (MetroArt): Instancia de la clase MetroArt.
         
             Imprime la lista de nacionalidades para que el usuario seleccione una eligiendo un numero
-            # TODO: COMPLETAR
+            y lleva al submenu para saber mas detalles de estas.
             Si el numero de nacionalidad es valido busca si tiene la información guardada, 
             si no consulta a la API y guarda y muestra la obra
         """        
@@ -376,7 +452,6 @@ class MetroArt:
                 
             print("No almacenadas, se procede a buscar en la API")
             print(" ")    
-            print("Recuperando obras desde la API. Espere por favor...") 
             
             # Busco las obras por ese nacionalidad en la API
             url = f"https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={nombre_de_la_nacionalidad}"
@@ -385,80 +460,158 @@ class MetroArt:
             
             ids_de_obras = datos['objectIDs']
             
+            print("Recuperando obras desde la API. Espere por favor...") 
+            print("")
+            if ids_de_obras == None:
+                print("No existen resultados para el nombre de autor ingresado")
+                print(" ")
+                continue
+                 
             # Las guardo en el nacionalidad
             self.obras_por_nacionalidad[nombre_de_la_nacionalidad] = ids_de_obras
-            print("")
+            print(f"Filtrando de {len(ids_de_obras)} resultados.")
+            print('')
+            print("Revisando obras:")
             for numero_de_obra in ids_de_obras: 
+                print(f"    Obra numero {numero_de_obra}") 
                 url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{numero_de_obra}"
+                
                 obra_respuesta = self.leer_api(url)
-                # TODO: Verificar que funcione
-                #if obra_respuesta['artistNationality'] == nombre_de_la_nacionalidad:    
-                nueva_obra = Obra(
-                    obra_respuesta['objectID'],
-                    obra_respuesta['title'],
-                    obra_respuesta['artistDisplayName'],
-                    obra_respuesta['artistNationality'],
-                    obra_respuesta['artistBeginDate'],
-                    obra_respuesta['artistEndDate'],
-                    obra_respuesta['classification'],
-                    obra_respuesta['objectDate'],
-                    obra_respuesta['primaryImage']
-                    )
-                self.obras.append(nueva_obra)
-            
+                
+                if obra_respuesta is None:
+                    print("Obra no válida en la API. No almacenada.")
+                    continue
+                
+                if obra_respuesta['artistNationality'] == nombre_de_la_nacionalidad:    
+                    numero = obra_respuesta['objectID']
+
+                    titulo = obra_respuesta['title'],
+                    if titulo == " " or titulo == "":
+                        titulo = "No especificado"
+                    if type(titulo) == tuple:
+                        titulo = titulo[0]
+
+                    nombre_del_autor = obra_respuesta['artistDisplayName'],
+                    print(nombre_del_autor)
+                    print(type(nombre_del_autor))
+                    if type(nombre_del_autor) == str:
+                        nombre_del_autor = nombre_del_autor.replace("(","").replace(")","").replace(",","")
+                    if nombre_del_autor == " " or nombre_del_autor == "":
+                        nombre_del_autor = "No especificado"
+                    if type(nombre_del_autor) == tuple:
+                        nombre_del_autor = nombre_del_autor[0]
+
+                    nacionalidad_del_autor = obra_respuesta['artistNationality'],
+                    if nacionalidad_del_autor == " " or nacionalidad_del_autor == "":
+                        nacionalidad_del_autor = "No especificada"
+                    if type(nacionalidad_del_autor) == tuple:
+                        nacionalidad_del_autor = nacionalidad_del_autor[0]
+
+                    fecha_de_nacimiento = obra_respuesta['artistBeginDate'],
+                    if fecha_de_nacimiento == " " or fecha_de_nacimiento == "":
+                        fecha_de_nacimiento = "No especificada"
+                    if type(fecha_de_nacimiento) == tuple:
+                        fecha_de_nacimiento = fecha_de_nacimiento[0]
+
+                    fecha_de_muerte = obra_respuesta['artistEndDate'],
+                    if fecha_de_muerte == " " or fecha_de_muerte == "":
+                        fecha_de_muerte = "No especificada"
+                    if type(fecha_de_muerte) == tuple:
+                        fecha_de_muerte = fecha_de_muerte[0]
+
+                    tipo = obra_respuesta['classification'],
+                    if tipo == " " or tipo == "":
+                        tipo = "No especificado"
+                    if type(tipo) == tuple:
+                        tipo = tipo[0]
+
+                    año_de_creación = obra_respuesta['objectDate'],
+                    if año_de_creación == " " or año_de_creación == "":
+                        año_de_creación = "No especificado"
+                    if type(año_de_creación) == tuple:
+                        año_de_creación = año_de_creación[0]
+
+                    imagen_de_la_obra = obra_respuesta['primaryImage']
+                    if type(imagen_de_la_obra) == tuple:
+                        imagen_de_la_obra = imagen_de_la_obra[0]
+
+                    nueva_obra = Obra(
+                        numero,
+                        titulo,
+                        nombre_del_autor,
+                        nacionalidad_del_autor,
+                        fecha_de_nacimiento,
+                        fecha_de_muerte,
+                        tipo,
+                        año_de_creación,
+                        imagen_de_la_obra,
+                        )
+                        #Verifico que no este guardada
+                    guardada = False
+                    for obra in self.obras:
+                        if obra.numero == nueva_obra.numero:
+                            guardada = True
+
+                    if not guardada:
+                        self.obras.append(nueva_obra)
+
             self.submenu_obras_por_nacionalidad(nombre_de_la_nacionalidad, ids_de_obras)
     
-    def submenu_obras_por_nombre(self,nombre_autor,ids_de_obras=[]):
-        """ Metodo para mostrar las obras de un nombre.
+    def submenu_obras_por_nombre(self,nombre_autor,ids_de_obras):
+        """ Metodo para mostrar las obras de un nombre buscado.
         Atributos:
             self (MetroArt): Instancia de la clase MetroArt.
             nombre_autor (str): Nombre del autor a buscar.
             ids_de_obras (list): IDs de las obras a mostrar.
             
-            TODO: COMPLETAR
+            Recorre la lista de obras que se le envian e imprimirá el menu
+            con las obras dando la opcion de ver mas detalles de esta.
         """    
-        while True:
-                print(" ")
-                print(f"---------- Nombre del autor: {nombre_autor} ----------")
-                print(" ")
-                for obra in self.obras:
-                    if obra.numero in ids_de_obras:
-                        print(obra.mostrar_para_listado())
-                print(" ")
-                numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
-                while not es_numero(numero_de_la_obra_a_mostrar):
+        if len(ids_de_obras)!=0:
+            while True:
                     print(" ")
-                    print("Intente de nuevo.")
+                    print(f"---------- Nombre del autor: {nombre_autor} ----------")
+                    print(" ")
+                    for obra in self.obras:
+                        if obra.numero in ids_de_obras:
+                            print(obra.mostrar_para_listado())
                     print(" ")
                     numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
-                
-                # Si decide salir 
-                if numero_de_la_obra_a_mostrar == '0': 
-                    break
-                
-                #Verifico que el id pertenece a una obra. Si no sale busco su elección
-                obra_encontrada = False
-                obra_a_mostrar = " "
-                for obra in self.obras:
-                    if obra.numero == int(numero_de_la_obra_a_mostrar):
-                        obra_encontrada = True
-                        obra_a_mostrar = obra
+                    while not es_numero(numero_de_la_obra_a_mostrar):
+                        print(" ")
+                        print("Intente de nuevo.")
+                        print(" ")
+                        numero_de_la_obra_a_mostrar = input("Ingrese el numero una obra para mostrar sus detalles o el numero 0 para salir: ")
+
+                    # Si decide salir 
+                    if numero_de_la_obra_a_mostrar == '0': 
                         break
                     
-                # Si no seleccionó un nombre valido de la lista
-                if obra_encontrada == False:
-                    print('')
-                    print("Número de obra no existente.")
-                    continue
-                
-                print(obra_a_mostrar.mostrar_detalles_completos())
-                
-                # Para mostrar la imagen
-                api_url = obra.imagen_de_la_obra
-                titulo = obra.titulo.replace(" ", "_")  # Reemplazo espacios por guiones bajos para el nombre del archivo
+                    #Verifico que el id pertenece a una obra. Si no sale busco su elección
+                    obra_encontrada = False
+                    obra_a_mostrar = " "
+                    for obra in self.obras:
+                        if obra.numero == int(numero_de_la_obra_a_mostrar):
+                            obra_encontrada = True
+                            obra_a_mostrar = obra
+                            break
+                        
+                    # Si no seleccionó un nombre valido de la lista
+                    if obra_encontrada == False:
+                        print('')
+                        print("Número de obra no existente.")
+                        continue
                     
-                self.mostrar_imagen(api_url,titulo)    
-            
+                    print(obra_a_mostrar.mostrar_detalles_completos())
+
+                    # Para mostrar la imagen
+                    api_url = obra_a_mostrar.imagen_de_la_obra
+                    titulo = obra_a_mostrar.titulo.replace(" ", "_")  # Reemplazo espacios por guiones bajos para el nombre del archivo
+
+                    self.mostrar_imagen(api_url,titulo)    
+        else:
+            print("No existen resultados para el nombre de autor ingresado")
+
     def busqueda_por_nombre_del_autor(self):
         """ Metodo para la funcionalidad de busqueda por nombre del autor.
         Atributos:
@@ -471,10 +624,11 @@ class MetroArt:
         """        
         while True:
             # Imprimo los  y guardo la elección del usuario
+            print(" ")
             print("---------- Busqueda por autor ----------")
-            
+            print('')
             nombre_autor = input("Ingrese el nombre y apellido del autor que desea consultar con un solo espacio (el separador) o el numero 0 para salir: ")
-            while not es_nombre(nombre_autor) and nombre_autor !=0:
+            while not es_nombre(nombre_autor) and nombre_autor !="0":
                 print(" ")
                 print("Intente de nuevo.")
                 print(" ")
@@ -484,6 +638,7 @@ class MetroArt:
             if nombre_autor == "0": 
                 break
             
+            print(' ')
             print(f"Buscando obras por {nombre_autor} ")
             print(' ')
             
@@ -493,27 +648,100 @@ class MetroArt:
             datos = self.leer_api(url)
             ids_de_obras = datos['objectIDs']        
             
-            print(" ")
             print("Recuperando obras desde la API. Espere por favor...") 
-            #   TODO: Validar en cada for si no consigue alguna obra 
+            print(" ")
+            if ids_de_obras == None:
+                print("No existen resultados para el nombre de autor ingresado")
+                print(" ")
+                continue
+            
+            print(f"Filtrando de {len(ids_de_obras)} resultados.")
+            print('')     
+            print("Revisando obras:")
             for numero_de_obra in ids_de_obras: 
-                # Validar "Not a valid Object"
+                print(f"    Obra numero {numero_de_obra}") 
                 url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{numero_de_obra}"
+                
                 obra_respuesta = self.leer_api(url)
-                # TODO: Verificar que funcione
-                #if obra_respuesta['artistDisplayName'] == nombre_autor:    
+                
+                if obra_respuesta is None:
+                    print("Obra no válida en la API. No almacenada.")
+                    continue
+                
+                numero = obra_respuesta['objectID']
+                
+                titulo = obra_respuesta['title'],
+                if titulo == " " or titulo == "":
+                    titulo = "No especificado"
+                if type(titulo) == tuple:
+                    titulo = titulo[0]
+                
+                nombre_del_autor = obra_respuesta['artistDisplayName'],
+                if type(nombre_del_autor) == str:
+                    nombre_del_autor = nombre_del_autor.replace("(","").replace(")","").replace(",","")
+                if nombre_del_autor == " " or nombre_del_autor == "":
+                    nombre_del_autor = "No especificado"
+                if type(nombre_del_autor) == tuple:
+                    nombre_del_autor = nombre_del_autor[0]
+                
+                nacionalidad_del_autor = obra_respuesta['artistNationality'],
+                if nacionalidad_del_autor == " " or nacionalidad_del_autor == "":
+                    nacionalidad_del_autor = "No especificada"
+                if type(nacionalidad_del_autor) == tuple:
+                    nacionalidad_del_autor = nacionalidad_del_autor[0]
+                
+                fecha_de_nacimiento = obra_respuesta['artistBeginDate'],
+                if fecha_de_nacimiento == " " or fecha_de_nacimiento == "":
+                    fecha_de_nacimiento = "No especificada"
+                if type(fecha_de_nacimiento) == tuple:
+                    fecha_de_nacimiento = fecha_de_nacimiento[0]
+                
+                fecha_de_muerte = obra_respuesta['artistEndDate'],
+                if fecha_de_muerte == " " or fecha_de_muerte == "":
+                    fecha_de_muerte = "No especificada"
+                if type(fecha_de_muerte) == tuple:
+                    fecha_de_muerte = fecha_de_muerte[0]
+                
+                tipo = obra_respuesta['classification'],
+                if tipo == " " or tipo == "":
+                    tipo = "No especificado"
+                if type(tipo) == tuple:
+                    tipo = tipo[0]
+                
+                año_de_creación = obra_respuesta['objectDate'],
+                if año_de_creación == " " or año_de_creación == "":
+                    año_de_creación = "No especificado"
+                if type(año_de_creación) == tuple:
+                    año_de_creación = año_de_creación[0]
+                
+                imagen_de_la_obra = obra_respuesta['primaryImage']
+                if type(imagen_de_la_obra) == tuple:
+                    imagen_de_la_obra = imagen_de_la_obra[0]
+                    
                 nueva_obra = Obra(
-                    obra_respuesta['objectID'],
-                    obra_respuesta['title'],
-                    obra_respuesta['artistDisplayName'],
-                    obra_respuesta['artistNationality'],
-                    obra_respuesta['artistBeginDate'],
-                    obra_respuesta['artistEndDate'],
-                    obra_respuesta['classification'],
-                    obra_respuesta['objectDate'],
-                    obra_respuesta['primaryImage']
+                    numero,
+                    titulo,
+                    nombre_del_autor,
+                    nacionalidad_del_autor,
+                    fecha_de_nacimiento,
+                    fecha_de_muerte,
+                    tipo,
+                    año_de_creación,
+                    imagen_de_la_obra,
                     )
-                self.obras.append(nueva_obra)
+                
+                #Verifico que no este guardada
+                guardada = False
+                for obra in self.obras:
+                    if obra.numero == nueva_obra.numero:
+                        guardada = True
+                        
+                if not guardada:
+                    self.obras.append(nueva_obra)
+                    
+                #Verifico el nombre del autor
+                if nombre_autor.lower() not in nueva_obra.nombre_del_autor.lower():
+                    ids_de_obras.remove(nueva_obra.numero)
             
             self.submenu_obras_por_nombre(nombre_autor,ids_de_obras)
         
@@ -552,15 +780,6 @@ class MetroArt:
                 print(" ")                
                 print("Opción no válida. Intente de nuevo.")
                 print(" ")
-            
-# Funciones a implementar:
-# 1. Busqueda de obras 
-#    a. por departamento
-#    b. por nacionalidad del autor
-#    c. por nombre del autor
-# 2. Mostrar detalles 
-
-# Hacer menu
         
         
                 
