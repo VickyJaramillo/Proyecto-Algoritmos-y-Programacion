@@ -473,10 +473,15 @@ class MetroArt:
                  
             # Las guardo en el nacionalidad
             self.obras_por_nacionalidad[nombre_de_la_nacionalidad] = ids_de_obras
+            
+            # Guardo los ids en una copia
+            copia_ids_de_obras = []
+            for id in ids_de_obras:
+                copia_ids_de_obras.append(id)
             print(f"Filtrando de {len(ids_de_obras)} resultados.")
             print('')
             print("Revisando obras:")
-            for numero_de_obra in ids_de_obras: 
+            for numero_de_obra in copia_ids_de_obras: 
                 print(f"    Obra numero {numero_de_obra}") 
                 url = f"https://collectionapi.metmuseum.org/public/collection/v1/objects/{numero_de_obra}"
                 
@@ -484,9 +489,11 @@ class MetroArt:
                 
                 if obra_respuesta is None:
                     print("Obra no válida en la API. No almacenada.")
+                    ids_de_obras.remove(numero_de_obra)
                     continue
                 
                 if obra_respuesta['artistNationality'] == nombre_de_la_nacionalidad:    
+                    
                     numero = obra_respuesta['objectID']
 
                     titulo = obra_respuesta['title'],
@@ -558,8 +565,14 @@ class MetroArt:
 
                     if not guardada:
                         self.obras.append(nueva_obra)
-
-            self.submenu_obras_por_nacionalidad(nombre_de_la_nacionalidad, ids_de_obras)
+                else:
+                    ids_de_obras.remove(numero_de_obra)
+            
+            if len(ids_de_obras)>0:
+                self.submenu_obras_por_nacionalidad(nombre_de_la_nacionalidad, ids_de_obras)
+            else:
+                print("No existen resultados para el nombre de autor ingresado")
+                print(" ")
     
     def submenu_obras_por_nombre(self,nombre_autor,ids_de_obras):
         """ Metodo para mostrar las obras de un nombre buscado.
@@ -746,9 +759,11 @@ class MetroArt:
                 #Verifico el nombre del autor
                 if nombre_autor.lower() not in nueva_obra.nombre_del_autor.lower():
                     ids_de_obras.remove(nueva_obra.numero)
-            
-            self.submenu_obras_por_nombre(nombre_autor,ids_de_obras)
-        
+            print(len(ids_de_obras))
+            if len(ids_de_obras)>0:
+                self.submenu_obras_por_nombre(nombre_autor,ids_de_obras)
+            else:
+                print("No existen resultados para el nombre de autor ingresado")
     
     def menu(self):
         """ Metodo para imprimir el menu principal del sistema
